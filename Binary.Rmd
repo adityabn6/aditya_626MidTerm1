@@ -1,0 +1,79 @@
+---
+title: "626MidTerm"
+author: "Aditya Jalin"
+date: "2023-03-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+# Load the required package
+library(tidyverse)
+library(caret)
+library(dplyr)
+
+# Load the dataset
+data <- read.csv("C:/Users/adityabn/Downloads/training_data.txt", sep="")
+
+data$activity <- ifelse(data$activity %in% c(1,2,3),1,0)
+data <- data[,-1]
+test_data <- read.csv("C:/Users/adityabn/Downloads/test_data.txt", sep="")
+test_data <- test_data[,-1]
+
+
+# Split the data into training and testing sets
+set.seed(123)
+trainIndex <- createDataPartition(data$activity, p = .7, list = FALSE, times = 1)
+train <- data[trainIndex,]
+test <- data[-trainIndex,]
+
+# Fit a logistic regression model on the training set
+model <- glm(activity ~ ., data = train, family = "binomial")
+
+# Predict the target variable on the test set
+predicted <- ifelse(predict(model, newdata = test, type = "response") > 0.5, 1, 0)
+
+# Measure the accuracy of the model on the validation set
+print(accuracy <- mean(predicted == test$activity))
+
+# Print the accuracy of the model
+print(paste0("Accuracy of the logistic regression model is: ", accuracy))
+predictions <- predicted
+# Calculate the performance metrics
+acc <- confusionMatrix(as.factor(predicted), as.factor(test$activity))$overall['Accuracy']
+prec <- confusionMatrix(as.factor(predicted), as.factor(test$activity))$byClass["Pos Pred Value"]
+rec <- confusionMatrix(as.factor(predicted), as.factor(test$activity))$byClass['Sensitivity']
+f1 <- 2 * (prec * rec) / (prec + rec)
+
+# Create a table of the performance results
+performanceTable <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1 Score"),
+  Score = c(round(acc, 2), round(prec, 2), round(rec, 2), round(f1, 2))
+)
+
+
+library(pROC)
+# Plot the ROC curve
+rocCurve <- roc(test$activity, predicted)
+plot(rocCurve, col = "blue", main = "ROC Curve of Logistic Regression Model")
+lines(x = c(0,1), y = c(0,1), lty = 2, col = "gray")
+
+
+#GENERATING RESULTS
+
+model <- glm(activity ~ ., data = data, family = "binomial")
+predicted <- ifelse(predict(model, newdata = test_data, type = "response") > 0.5, 1, 0)
+write.table(predicted, "C:/Users/adityabn/Downloads/binary_Blogberry.txt", append = FALSE, sep = " ", dec = ".",row.names = FALSE, col.names = FALSE)
+
+
+write.csv(data, "C:/Users/adityabn/Downloads/train_python_base.csv", row.names=FALSE)
+write.csv(test_data, "C:/Users/adityabn/Downloads/train_python_base.csv", row.names=FALSE)
+
+```
+
+
+
